@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="حاسبة بسيطة وسريعة">
+<title>حاسبة بسيطة</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f3f4f6;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;color:#111827}
+.calculator{width:min(380px,94vw);padding:20px;border-radius:24px;background:#fff;box-shadow:0 16px 45px #0002}
+h1{text-align:center;font-size:1.25rem;margin:0 0 14px}
+.display{height:92px;margin-bottom:14px;padding:14px;border-radius:16px;background:#111827;color:#fff;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;overflow:hidden}
+.expression{font-size:.9rem;color:#9ca3af;height:22px;white-space:nowrap;overflow:hidden;max-width:100%}
+.result{font-size:2.2rem;font-weight:700;line-height:1.1;white-space:nowrap;overflow:hidden;max-width:100%}
+.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+button{border:0;border-radius:15px;height:62px;font-size:1.25rem;font-weight:650;cursor:pointer;background:#e5e7eb;color:#111827;transition:transform .08s,filter .08s}
+button:hover{filter:brightness(.96)}button:active{transform:scale(.96)}
+.operator{background:#dbeafe}.equals{background:#2563eb;color:#fff}.clear{background:#fee2e2;color:#b91c1c}.zero{grid-column:span 2}
+.hint{text-align:center;color:#6b7280;font-size:.78rem;margin:13px 0 0}
+@media(max-width:360px){button{height:56px}.calculator{padding:15px}.result{font-size:1.9rem}}
+</style>
+</head>
+<body>
+<main class="calculator" aria-label="حاسبة">
+<h1>🧮 الحاسبة</h1>
+<section class="display" aria-live="polite">
+<div id="expression" class="expression"></div>
+<div id="result" class="result">0</div>
+</section>
+<section class="keys">
+<button class="clear" data-action="clear">AC</button>
+<button data-action="delete">⌫</button>
+<button class="operator" data-value="%">%</button>
+<button class="operator" data-value="÷">÷</button>
+<button data-value="7">7</button><button data-value="8">8</button><button data-value="9">9</button><button class="operator" data-value="×">×</button>
+<button data-value="4">4</button><button data-value="5">5</button><button data-value="6">6</button><button class="operator" data-value="-">−</button>
+<button data-value="1">1</button><button data-value="2">2</button><button data-value="3">3</button><button class="operator" data-value="+">+</button>
+<button class="zero" data-value="0">0</button><button data-value=".">.</button><button class="equals" data-action="equals">=</button>
+</section>
+<p class="hint">يمكنك استخدام لوحة المفاتيح أيضًا</p>
+</main>
+<script>
+const resultEl=document.getElementById("result"), expressionEl=document.getElementById("expression");
+let current="0", previous=null, operator=null, waiting=false;
+function render(){resultEl.textContent=current;expressionEl.textContent=previous!==null&&operator?format(previous)+" "+operator:""}
+function format(n){return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,",")}
+function inputDigit(d){if(waiting){current=d;waiting=false}else current=current==="0"?d:current+d;render()}
+function inputDot(){if(waiting){current="0.";waiting=false}else if(!current.includes("."))current+=".";render()}
+function chooseOperator(op){if(op==="%"){current=String(Number(current)/100);render();return} if(operator&&!waiting)calculate();previous=Number(current);operator=op;waiting=true;render()}
+function calculate(){if(previous===null||!operator)return;const a=previous,b=Number(current);let v;if(operator==="+")v=a+b;else if(operator==="-")v=a-b;else if(operator==="×")v=a*b;else if(operator==="÷")v=b===0?NaN:a/b;if(!Number.isFinite(v)){current="خطأ";previous=null;operator=null;waiting=true;render();return}current=String(Number(v.toFixed(12)));previous=null;operator=null;waiting=true;render()}
+function clearAll(){current="0";previous=null;operator=null;waiting=false;render()}
+function del(){if(waiting)return;current=current.length>1?current.slice(0,-1):"0";render()}
+document.querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{const v=b.dataset.value,a=b.dataset.action;if(v!==undefined){if(v===".")inputDot();else if("+-×÷%".includes(v))chooseOperator(v);else inputDigit(v)}else if(a==="clear")clearAll();else if(a==="delete")del();else if(a==="equals")calculate()}));
+document.addEventListener("keydown",e=>{if(/^\d$/.test(e.key))inputDigit(e.key);else if(e.key===".")inputDot();else if(e.key==="+")chooseOperator("+");else if(e.key==="-")chooseOperator("-");else if(e.key==="*"||e.key.toLowerCase()==="x")chooseOperator("×");else if(e.key==="/"){e.preventDefault();chooseOperator("÷")}else if(e.key==="%")chooseOperator("%");else if(e.key==="Enter"||e.key==="=")calculate();else if(e.key==="Escape")clearAll();else if(e.key==="Backspace")del()});
+render();
+</script>
+</body>
+</html>
